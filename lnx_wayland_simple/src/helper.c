@@ -37,10 +37,8 @@ void hello_setup_wayland(void) {
         exit(EXIT_FAILURE);
     }
 
-    /* re
     registry = wl_display_get_registry(display);
-    wl_registry_add_listener(registry, &registry_listener,
-        NULL);
+    wl_registry_add_listener(registry, &registry_listener, NULL);
     wl_display_roundtrip(display);
     wl_registry_destroy(registry);
 }
@@ -92,29 +90,30 @@ struct pool_data {
     unsigned size;
 };
 
-struct wl_shm_pool *hello_create_memory_pool(int file)
+struct wl_shm_pool *hello_create_memory_pool(int fd)
 {
     struct pool_data *data;
     struct wl_shm_pool *pool;
     struct stat stat;
 
-    if (fstat(file, &stat) != 0)
+    if (fstat(fd, &stat) != 0) {
         return NULL;
+    }
 
     data = malloc(sizeof(struct pool_data));
 
-    if (data == NULL)
-        return NULL;
+    if (data == NULL) return NULL;
 
     data->capacity = stat.st_size;
     data->size = 0;
-    data->fd = file;
+    data->fd = fd;
 
     data->memory = mmap(0, data->capacity,
         PROT_READ, MAP_SHARED, data->fd, 0);
 
-    if (data->memory == MAP_FAILED)
+    if (data->memory == MAP_FAILED) {
         goto cleanup_alloc;
+    }
 
     pool = wl_shm_create_pool(shm, data->fd, data->capacity);
 
@@ -151,14 +150,17 @@ struct wl_buffer *hello_create_buffer(struct wl_shm_pool *pool,
     struct wl_buffer *buffer;
 
     pool_data = wl_shm_pool_get_user_data(pool);
+
     buffer = wl_shm_pool_create_buffer(pool,
-        pool_data->size, width, height,
-        width*sizeof(pixel), PIXEL_FORMAT_ID);
+                                       pool_data->size, 
+                                       width, 
+                                       height,
+                                       width * sizeof(pixel), 
+                                       PIXEL_FORMAT_ID);
 
-    if (buffer == NULL)
-        return NULL;
+    if (buffer == NULL) return NULL;
 
-    pool_data->size += width*height*sizeof(pixel);
+    pool_data->size += width * height * sizeof(pixel);
 
     return buffer;
 }
@@ -184,15 +186,15 @@ static const struct wl_shell_surface_listener
     .configure = shell_surface_configure,
 };
 
-struct wl_shell_surface *hello_create_surface(void)
-{
+struct wl_shell_surface *hello_create_surface(void) {
     struct wl_surface *surface;
     struct wl_shell_surface *shell_surface;
 
     surface = wl_compositor_create_surface(compositor);
 
-    if (surface == NULL)
+    if (surface == NULL) {
         return NULL;
+    }
 
     shell_surface = wl_shell_get_shell_surface(shell, surface);
 
@@ -201,8 +203,7 @@ struct wl_shell_surface *hello_create_surface(void)
         return NULL;
     }
 
-    wl_shell_surface_add_listener(shell_surface,
-        &shell_surface_listener, 0);
+    wl_shell_surface_add_listener(shell_surface, &shell_surface_listener, 0);
     wl_shell_surface_set_toplevel(shell_surface);
     wl_shell_surface_set_user_data(shell_surface, surface);
     wl_surface_set_user_data(surface, NULL);

@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <wayland-client.h>
+#include "helper.h"
 
 
 static const unsigned WIDTH = 320;
